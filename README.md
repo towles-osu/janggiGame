@@ -1,3 +1,5 @@
+The game of Janggi (a korean variant of chess).
+
 # portfolio-project
 
 **THIS PROJECT WAS ORIGINAL DEVELOPPED AS A CLASS ASSIGNMENT**
