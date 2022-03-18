@@ -73,6 +73,11 @@ class JanggiGame:
                                 'a':0, 'b':1, 'c':2, 'd':3, 'e':4, 'f':5, 'g':6, 'h':7, 'i':8}
         self._col_label = self._col_label_gen(14)
 
+    def get_whose_turn(self):
+        return self._current_turn
+
+    def get_col_conv(self):
+        return self._col_conversion
 
     def get_board(self):
         """Returns the board object contained in this game.  For use by GUI"""
@@ -354,6 +359,11 @@ class JanggiGame:
         col = self._col_conversion[piece_location[0]]
         row = int(piece_location[1:]) - 1
         return self._board[row][col]
+
+    def list_moves(self, piece_tuple):
+        """Given a tuple or row,col for a piece returns a list of the possible locations
+        that piece could move to (ignore check limitations)"""
+        return self._list_moves(self._convert_to_string_location(piece_tuple[0], piece_tuple[1]))
 
     def _list_moves(self, piece_location):
         """
