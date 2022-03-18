@@ -1,11 +1,20 @@
+The game of Janggi (a korean variant of chess).
+
 # portfolio-project
 
 **THIS PROJECT WAS ORIGINAL DEVELOPPED AS A CLASS ASSIGNMENT**
+
 **THE ORIGINAL ASSIGNMENT DESCRIPTION IS BELLOW**
+
 **I HAVE EXPANDED THE PROGRAM BEYOND THE ASSIGNMENT, INCLUDING:**
+
   -Developping a simple AI to play against
+  
   -Implementing a UI
 
+
+
+**ORIGINAL ASSIGNMENT DESCRIPTION FROM CS162 at Oregon State University**
 
 
 **Remember that this project cannot be submitted late.**
