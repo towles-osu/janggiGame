@@ -13,6 +13,8 @@
 #   'RED_WON' or 'BLUE_WON), and is_in_check which takes a player color (either 'red'
 #   or 'blue') and returns if that player is currently in check.
 
+import JanggiAi as ja
+
 
 
 class GamePiece:
@@ -71,6 +73,10 @@ class JanggiGame:
                                 'a':0, 'b':1, 'c':2, 'd':3, 'e':4, 'f':5, 'g':6, 'h':7, 'i':8}
         self._col_label = self._col_label_gen(14)
 
+
+    def get_board(self):
+        """Returns the board object contained in this game.  For use by GUI"""
+        return self._board
 
     def _construct_board(self):
         """
