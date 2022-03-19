@@ -83,6 +83,18 @@ class JanggiGame:
         """Returns the board object contained in this game.  For use by GUI"""
         return self._board
 
+    def try_move(self, src, dest):
+        """Calls the private try move method"""
+        self._try_move(src, dest)
+
+    def restore_board(self):
+        """calls the private restore board method to restore board after trying move"""
+        self._restore_board()
+
+    def is_in_checkmate(self):
+        """calls the private is in checkmate, only to be used by ai and gui"""
+        return self._is_in_checkmate()
+
     def _construct_board(self):
         """
         Creates and returns a two dimensional list to represent a Janggi Board. Populates empty verticies
@@ -189,6 +201,11 @@ class JanggiGame:
                 for col_index in range(3,6):
                     if str(self._board[row_index][col_index]) == ("GENERAL" + player_color):
                         return self._col_conversion[col_index] + str(row_index + 1)
+
+    def convert_loc_to_str(self, row, col):
+        """given a row and col (0 indexed) returns the string janggiGame representation of that cell"""
+        return self._convert_to_string_location(row, col)
+
 
 
     def _convert_to_string_location(self, row, col):
@@ -307,7 +324,6 @@ class JanggiGame:
 
         return True
 
-
     def _try_move(self, piece_origin, piece_destination):
         """
         Stores a temporary board state before attempting to move a piece.
@@ -339,13 +355,16 @@ class JanggiGame:
                 copy[row].append(list_to_copy[row][col])
         return copy
 
-
     def _restore_board(self):
         """
         Only to be called after _try_move, restores the board to the state
         it was in before try_move
         """
         self._board = self._copy_2d_list(self._temp_board)
+
+    def get_piece(self, piece_location):
+        """Get piece method for public use.  Takes a location string and returns the game piece (or None)"""
+        return self._get_piece(piece_location)
 
     def _get_piece(self, piece_location):
         """
@@ -394,7 +413,7 @@ class JanggiGame:
             return self._cannon_moves(piece_location, piece_to_check.get_color())
         return list()
 
-
+##############   METHODS FOR GENERATING MOVES FOR DIFFERENT TYPES OF PIECES  ##############
     def _cannon_moves(self, piece_location, piece_color):
         """
         Takes as a parameter a vertex location in form '[col letter][row num]'
@@ -952,9 +971,6 @@ class JanggiGame:
 
         return move_list
 
-
-
-
     def _diag_left(self, vertex_location, vertical_direction):
         """
         Helper function to determine if a Solider/Chariot/Cannon at the given location
@@ -989,7 +1005,6 @@ class JanggiGame:
                 return True
             return False
         return False
-
 
     def _soldier_moves(self, piece_location, piece_color):
         """

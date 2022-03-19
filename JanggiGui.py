@@ -5,6 +5,8 @@
 
 import pygame as pg
 import JanggiGame as jg
+import JanggiAi as ai
+import random
 
 FRAME_RATE = 15
 BOARD_DARK = pg.Color("dark gray")
@@ -17,8 +19,6 @@ class JanggiGui:
     """
     Contains the GUI for playing Janggi
     """
-
-
 
     def __init__(self, size=None):
         """"""
@@ -36,6 +36,7 @@ class JanggiGui:
     def run(self):
         """Runs a fresh game"""
         pg.init()
+        random.seed()
         screen = pg.display.set_mode((self.WIDTH + (2 * self.SIDE_PADDING), self.PADDING + self.HEIGHT + (2 * self.SIDE_PADDING)))
         clock = pg.time.Clock()
         screen.fill(pg.Color("gray"))
@@ -54,6 +55,30 @@ class JanggiGui:
                         self.attempt_move(self.piece_selected, self.get_click_location(pg.mouse.get_pos()))
                         self.piece_selected = None
 
+            if self.game.get_whose_turn() == 'red':
+                potential_moves = ai.ai_move_simple(self.game, 'red')
+                if not potential_moves:
+                    print("NO VALID MOVES FOR AI - red")
+                else:
+                    current_move = potential_moves[0]
+                    top_val = current_move[0]
+                    choices = [current_move]
+                    for move in potential_moves:
+                        if move[0] > top_val:
+                            break
+                        choices.append(move)
+                    current_move = choices[random.randrange(len(choices))]
+                    clock.tick(5)
+                    self.piece_selected = (int(current_move[1][1:])-1, self.col_conversion[current_move[1][0]])
+                    self.draw_game(screen)
+                    clock.tick(FRAME_RATE)
+                    pg.display.flip()
+                    clock.tick(1)
+
+                    self.game.make_move(current_move[1], current_move[2])
+                    self.piece_selected = None
+
+
             self.draw_game(screen)
             clock.tick(FRAME_RATE)
             pg.display.flip()
@@ -66,8 +91,8 @@ class JanggiGui:
         return (int(row), int(col))
 
     def attempt_move(self, source, dest):
-        src_str = self.convert_loc_to_str(source[0], source[1])
-        dest_str = self.convert_loc_to_str(dest[0], dest[1])
+        src_str = self.game.convert_loc_to_str(source[0], source[1])
+        dest_str = self.game.convert_loc_to_str(dest[0], dest[1])
         if src_str != dest_str:
             self.last_move_valid = self.game.make_move(src_str, dest_str)
 
@@ -140,13 +165,11 @@ class JanggiGui:
         if i == self.piece_selected[0] and j == self.piece_selected[1]:
             return True
         list_potentials = self.game.list_moves(self.piece_selected)
-        if self.convert_loc_to_str(i,j) in list_potentials:
+        if self.game.convert_loc_to_str(i,j) in list_potentials:
             return True
         return False
 
-    def convert_loc_to_str(self, row, col):
-        """given a row,col tuple returns the string janggiGame representation of that cell"""
-        return self.col_conversion[col] + str(row + 1)
+
 
 def main():
     """starts a fresh game"""
