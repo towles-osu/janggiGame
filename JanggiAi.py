@@ -32,7 +32,9 @@ def ai_move_simple(board: JanggiGame, color: str):
                 possible_moves = board.list_moves((i,j))
                 piece_pos = board.convert_loc_to_str(i,j)
                 for move in possible_moves:
-                    prioritize_move(board, piece_pos, move, move_list, color)
+                    if move != piece_pos:
+                        prioritize_move(board, piece_pos, move, move_list, color)
+    print(move_list)
     return move_list
 
 
@@ -42,24 +44,27 @@ def prioritize_move(board, piece_pos, move, move_list, color):
     HELPER FOR ai_move_simple"""
     in_check = board.is_in_check(color)
     # For each potential move, try it with try move
-    board.try_move(piece_pos, move)
+    state_to_restore = board.try_move(piece_pos, move)
 
     # if we are in check and it results in getting out of check push with priority 0
     if in_check:
         if not board.is_in_check(color):
-            heappush(move_list, (0, (piece_pos, move)))
+            heappush(move_list, (0, piece_pos, move))
+        board.restore_board(state_to_restore)
         return
 
     # if it makes result desired color wins push move with 1 priority
     # if results in opponent being in check push with priority 2
     if board.is_in_check(COLOR_SWITCH[color]):
         if board.is_in_checkmate(COLOR_SWITCH[color]):
-            heappush(move_list, (1, (piece_pos, move)))
+            heappush(move_list, (1, piece_pos, move))
+            board.restore_board(state_to_restore)
             return
         heappush(move_list, (2, piece_pos, move))
+        board.restore_board(state_to_restore)
         return
     # restore board
-    board.restore_board()
+    board.restore_board(state_to_restore)
 
     target_piece = board.get_piece(move)
     # after the try-move possibilites check if move captures an opponents piece (priority 3)

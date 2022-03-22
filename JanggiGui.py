@@ -13,6 +13,9 @@ BOARD_DARK = pg.Color("dark gray")
 BOARD_LIGHT = pg.Color("white")
 BG_COL = pg.Color("gray")
 TEXT_COL = pg.Color("indigo")
+ON_COL = pg.Color("green")
+OFF_COL = pg.Color("darkslategray")
+
 
 
 class JanggiGui:
@@ -32,6 +35,9 @@ class JanggiGui:
         self.PADDING = self.CELL_SIZE
         self.piece_selected = None
         self.last_move_valid = True
+        self.played_by_ai = {'blue': False, 'red': False}
+        self.BUTTON_PADDING = self.CELL_SIZE // 8
+        self.button_height = self.CELL_SIZE // 2 - (self.BUTTON_PADDING // 2)
 
     def run(self):
         """Runs a fresh game"""
@@ -42,47 +48,78 @@ class JanggiGui:
         screen.fill(pg.Color("gray"))
         self.draw_game(screen)
         running = True
+        cur_turn = None
+        has_played = self.game.get_whose_turn()
         while running:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     running = False
                 elif event.type == pg.MOUSEBUTTONDOWN:
+                    mouse_pos = pg.mouse.get_pos()
+                    if mouse_pos[1] < self.PADDING:
+                        if mouse_pos[0] > self.WIDTH - 2*self.CELL_SIZE:
+                            if mouse_pos[1] < self.button_height:
+                                self.played_by_ai['blue'] = not self.played_by_ai['blue']
+                            elif mouse_pos[1] > self.button_height + self.BUTTON_PADDING and \
+                                mouse_pos[1] < 2*self.button_height + self.BUTTON_PADDING:
+                                self.played_by_ai['red'] = not self.played_by_ai['red']
                     if not self.piece_selected:
-                        attempt = self.get_click_location(pg.mouse.get_pos())
+                        attempt = self.get_click_location(mouse_pos)
                         if self.game.get_board()[attempt[0]][attempt[1]]:
                             self.piece_selected = attempt
                     else:
-                        self.attempt_move(self.piece_selected, self.get_click_location(pg.mouse.get_pos()))
+                        self.attempt_move(self.piece_selected, self.get_click_location(mouse_pos))
                         self.piece_selected = None
 
-            if self.game.get_whose_turn() == 'red':
-                potential_moves = ai.ai_move_simple(self.game, 'red')
-                if not potential_moves:
-                    print("NO VALID MOVES FOR AI - red")
-                else:
-                    current_move = potential_moves[0]
-                    top_val = current_move[0]
-                    choices = [current_move]
-                    for move in potential_moves:
-                        if move[0] > top_val:
-                            break
-                        choices.append(move)
-                    current_move = choices[random.randrange(len(choices))]
-                    clock.tick(5)
-                    self.piece_selected = (int(current_move[1][1:])-1, self.col_conversion[current_move[1][0]])
-                    self.draw_game(screen)
-                    clock.tick(FRAME_RATE)
-                    pg.display.flip()
-                    clock.tick(1)
+            if has_played is False and self.played_by_ai[cur_turn]:
+                has_played = True
+                self.make_ai_move(self.game.get_whose_turn(), screen, clock)
+                clock.tick(FRAME_RATE)
 
-                    self.game.make_move(current_move[1], current_move[2])
-                    self.piece_selected = None
-
+            if cur_turn != self.game.get_whose_turn():
+                cur_turn = self.game.get_whose_turn()
+                has_played = False
 
             self.draw_game(screen)
             clock.tick(FRAME_RATE)
             pg.display.flip()
 
+    def make_ai_move(self, color, screen, clock):
+        """
+        Makes a move using ai_simple_move from JanggiAi. Displays the move as well.
+        """
+        potential_moves = ai.ai_move_simple(self.game, color)
+        if not potential_moves:
+            print("NO VALID MOVES FOR AI - red")
+        else:
+            current_move = potential_moves[0]
+            top_val = current_move[0]
+            choices = list()
+            for move in potential_moves:
+                if move[0] > top_val:
+                    break
+                choices.append(move)
+            current_move = choices[random.randrange(len(choices))]
+            print("choices", choices)
+            #clock.tick(5)
+            self.piece_selected = (int(current_move[1][1:]) - 1, self.col_conversion[current_move[1][0]])
+            self.draw_game(screen)
+            clock.tick(FRAME_RATE)
+            pg.display.flip()
+            clock.tick(1)
+
+            #This deals with the potential of an invalid move being attempted by picking another move
+            while not self.game.make_move(current_move[1], current_move[2]):
+                choices.remove(current_move)
+                if len(choices) == 0:
+                    print("No possible moves, so pass")
+                    if not self.game.make_move("a1","a1"):
+                        print("game is over because no valid moves in check, should have registered as checkmate")
+                        if self.game.is_in_checkmate(color):
+                            self.game._game_state = 'BLUE_WON' if color == 'red' else 'RED_WON'
+                    break
+                current_move = choices[random.randrange(len(choices))]
+            self.piece_selected = None
 
     def get_click_location(self, mouse_pos):
         """Returns location as row, col (which is reversed to how pygame handles things, but matches janggiGame)"""
@@ -102,6 +139,22 @@ class JanggiGui:
         self.draw_board(screen)
         self.draw_pieces(screen)
         self.draw_text_info(screen)
+        self.draw_ai_buttons(screen)
+
+    def draw_ai_buttons(self, screen):
+        """Draws selectable buttons for having ai make moves for a given color"""
+        a_font = pg.font.Font(None, int (self.CELL_SIZE // 4))
+        button_left = self.WIDTH - (2 * self.CELL_SIZE)
+        blue_text = "AI play for blue (ON)" if self.played_by_ai['blue'] else "AI play for blue (OFF)"
+        red_text = "AI play for red (ON)" if self.played_by_ai['red'] else "AI play for red (OFF)"
+        blue_color = ON_COL if self.played_by_ai['blue'] else OFF_COL
+        red_color = ON_COL if self.played_by_ai['red'] else OFF_COL
+        pg.draw.rect(screen, blue_color, pg.Rect(button_left, 0, self.CELL_SIZE*2, self.button_height))
+        pg.draw.rect(screen, red_color, pg.Rect(button_left, self.button_height+ 3, self.CELL_SIZE * 2, self.button_height))
+        text = a_font.render(blue_text, False, TEXT_COL)
+        screen.blit(text, (button_left, 3))
+        text = a_font.render(red_text, False, TEXT_COL)
+        screen.blit(text, (button_left, self.button_height + self.BUTTON_PADDING))
 
     def draw_text_info(self, screen):
         a_font = pg.font.Font(None, int(self.CELL_SIZE // 2))

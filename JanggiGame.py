@@ -84,16 +84,18 @@ class JanggiGame:
         return self._board
 
     def try_move(self, src, dest):
-        """Calls the private try move method"""
+        """Calls the private try move method, only to be used by JanggiAi.  Returns the board to restore to after try"""
+        starting_board = self._copy_2d_list(self._board)
         self._try_move(src, dest)
+        return starting_board
 
-    def restore_board(self):
-        """calls the private restore board method to restore board after trying move"""
-        self._restore_board()
+    def restore_board(self, board):
+        """Given a board state to restore to, restores the board to that state."""
+        self._board = self._copy_2d_list(board)
 
-    def is_in_checkmate(self):
+    def is_in_checkmate(self, color):
         """calls the private is in checkmate, only to be used by ai and gui"""
-        return self._is_in_checkmate()
+        return self._is_in_checkmate(color)
 
     def _construct_board(self):
         """
@@ -285,6 +287,7 @@ class JanggiGame:
             if validate_col < 0 or validate_col > 8 or validate_row < 1 or validate_row > 10:
                 return False
         except:
+            print("error in make_move", piece_origin, piece_destination)
             return False
 
         #per a note from Piazza I have made it so any input of the same location for origin and destination
